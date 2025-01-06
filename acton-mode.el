@@ -101,6 +101,43 @@
       ;; Comments
       ("#.*$" . font-lock-comment-face))))
 
+;; Create and set up syntax table
+(defvar acton-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    ;; Comments
+    (modify-syntax-entry ?# "<" table)
+    (modify-syntax-entry ?\n ">" table)
+
+    ;; Strings
+    (modify-syntax-entry ?\" "\"" table)
+    (modify-syntax-entry ?' "\"" table)
+
+    ;; Pairs
+    (modify-syntax-entry ?\( "()" table)
+    (modify-syntax-entry ?\) ")(" table)
+    (modify-syntax-entry ?\[ "(]" table)
+    (modify-syntax-entry ?\] ")[" table)
+    (modify-syntax-entry ?\{ "(}" table)
+    (modify-syntax-entry ?\} "){" table)
+
+    ;; Operators
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?- "." table)
+    (modify-syntax-entry ?* "." table)
+    (modify-syntax-entry ?/ "." table)
+    (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?^ "." table)
+    (modify-syntax-entry ?! "." table)
+    (modify-syntax-entry ?< "." table)
+    (modify-syntax-entry ?> "." table)
+    (modify-syntax-entry ?= "." table)
+
+    ;; Symbol constituents
+    (modify-syntax-entry ?_ "_" table)
+    table))
+
 ;;;###autoload
 (define-derived-mode acton-mode prog-mode "Acton"
   "Major mode for editing Acton source code."
