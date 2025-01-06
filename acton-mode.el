@@ -110,8 +110,9 @@
   (setq-local comment-start "#")
   (setq-local comment-start-skip "#+\\s-*")
 
-  ;; Indentation (basic setup - can be enhanced)
+  ;; Indentation setup
   (setq-local indent-line-function 'acton-indent-line)
+  (setq-local tab-width 4)  ; Default to 4 spaces per indent level
 
   ;; Font lock setup
   (setq-local font-lock-defaults
@@ -190,7 +191,7 @@
           (save-excursion
             (when (and (skip-chars-backward " \t\n") (not (bobp)))
               (when (looking-back ":[ \t]*" (line-beginning-position))
-                (setq indent (+ indent default-tab-width)))))
+                (setq indent (+ indent tab-width)))))
 
           ;; Return the indentation level
           indent)))))
