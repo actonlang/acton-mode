@@ -1,4 +1,5 @@
 ;;; acton-mode.el --- Major mode for editing Acton source code
+;;; ;; -*- lexical-binding: t; -*-
 
 ;; Copyright (C) Kristian Larsson <k@centor.se>
 ;; Author: Kristian Larsson
