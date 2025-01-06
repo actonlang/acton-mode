@@ -5,6 +5,7 @@
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
 ;; Version: 0.1.0
+;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
 ;; This is a major mode for the Acton programming language
