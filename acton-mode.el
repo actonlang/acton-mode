@@ -1,16 +1,16 @@
-;;; acton-mode.el --- Major mode for editing Acton source code
-;;; ;; -*- lexical-binding: t; -*-
+;;; acton-mode.el -*- lexical-binding: t; -*-
+;;; Major mode for editing Acton source code
 
 ;; Copyright (C) Kristian Larsson <k@centor.se>
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.1.0
+;; Version: 0.2.0
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
 ;; This is a major mode for the Acton programming language
-;;
+
 ;;; License:
 ;;
 ;; Redistribution and use in source and binary forms, with or without modification,
@@ -50,114 +50,100 @@
 
 ;; Define several categories of keywords
 (defvar acton-keywords
-  '("actor" "after" "and" "as" "assert" "async" "await"
-    "break" "class" "continue" "def" "del" "elif"
-    "else" "extension" "finally" "for" "from" "if" "import"
-    "in" "is" "lambda" "not" "or" "pass" "protocol"
-    "raise" "return" "try" "var" "while" "with" "yield"))
+  '("if" "elif" "else" "while" "for" "in" "try" "except" "finally"
+    "with" "return" "break" "continue" "pass" "raise" "yield" "from"
+    "import" "as" "global" "nonlocal" "assert" "await" "async" "del"
+    "lambda"))
+
+(defvar acton-declarations
+  '("def" "class" "actor" "protocol" "extension" "var"))
 
 (defvar acton-constants
-  '("NotImplemented" "..."))
+  '("True" "False" "None" "NotImplemented" "..."))
 
 (defvar acton-effects
-  '("_" "proc" "mut" "pure" "action"))
+  '("proc" "mut" "pure" "action"))
+
+(defvar acton-builtin-functions
+  '("isinstance"))
+
+(defvar acton-operators
+  '("+" "-" "*" "/" "//" "%" "@" "**"          ; arithmetic
+    "==" "!=" "<>" "<" ">" "<=" ">=" "is" "in" ; comparison
+    "and" "or" "not"                           ; logical
+    "&" "|" "^" "~" "<<" ">>"                  ; bitwise
+    "=" "+=" "-=" "*=" "/=" "//=" "%=" "@="    ; assignment
+    "&=" "|=" "^=" "<<=" ">>="))
 
 (defvar acton-decorators
-  '("@property" "@staticmethod"))
+  '("@property" "@staticmethod" "@static"))
 
-;; Create the regex for different syntax elements
+;; Create the regex string for each category of keywords
 (defconst acton-font-lock-keywords
-  (let ((kw-re (regexp-opt acton-keywords 'words))
-        (const-re (regexp-opt acton-constants 'words))
-        (effects-re (regexp-opt acton-effects 'words))
+  (let ((kw-re (concat "\\_<" (regexp-opt acton-keywords t) "\\_>"))
+        (decl-re (concat "\\_<" (regexp-opt acton-declarations t) "\\_>"))
+        (const-re (concat "\\_<" (regexp-opt acton-constants t) "\\_>"))
+        (effects-re (concat "\\_<" (regexp-opt acton-effects t) "\\_>"))
+        (builtin-re (concat "\\_<" (regexp-opt acton-builtin-functions t) "\\_>"))
         (decorator-re (regexp-opt acton-decorators)))
     `(
+      ;; Triple-quoted strings
+      ("\\(\"\"\"[^\"]*\"\"\"\\|'''[^']*'''\\)"
+       0 font-lock-string-face)
+
+      ;; Regular strings with escapes
+      ("\\(\"[^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\"\\|'[^'\\]*\\(?:\\\\.[^'\\]*\\)*'\\)"
+       0 font-lock-string-face)
+
+      ;; Numbers - hex
+      ("\\<0x[0-9a-fA-F]+\\>" . font-lock-constant-face)
+      ;; Numbers - octal
+      ("\\<0o[0-7]+\\>" . font-lock-constant-face)
+      ;; Numbers - float
+      ("\\<\\(?:[0-9]+\\.[0-9]*\\|[0-9]*\\.[0-9]+\\)\\(?:[eE][+-]?[0-9]+\\)?j?\\>"
+       . font-lock-constant-face)
+      ;; Numbers - decimal
+      ("\\<[0-9]+\\>" . font-lock-constant-face)
+
       ;; Decorators
-      (,(concat "^[ \t]*" decorator-re "[ \t]*$") . font-lock-preprocessor-face)
+      (,(concat "^[ \t]*" decorator-re "[ \t]*$")
+       . font-lock-preprocessor-face)
+
       ;; Keywords
       (,kw-re . font-lock-keyword-face)
-      ;; Constants
+      (,decl-re . font-lock-keyword-face)
       (,const-re . font-lock-constant-face)
-      ;; Effects
       (,effects-re . font-lock-builtin-face)
+      (,builtin-re . font-lock-builtin-face)
+
       ;; Function definitions
-      ("\\<def\\>[ \t]+\\([[:alnum:]_]+\\)"
+      ("\\<def\\>[ \t]+\\([a-zA-Z_][a-zA-Z0-9_]*\\)"
        (1 font-lock-function-name-face))
-      ;; Class/Protocol/Extension definitions
-      ("\\<\\(class\\|protocol\\|extension\\)\\>[ \t]+\\([[:alnum:]_]+\\)"
-       (2 font-lock-type-face))
-      ;; Actor definitions
-      ("\\<actor\\>[ \t]+\\([[:alnum:]_]+\\)"
+
+      ;; Type annotations
+      (":[ \t]*\\([A-Z][a-zA-Z0-9_]*\\)"
        (1 font-lock-type-face))
-      ;; String literals
-      ("\\(\"\"\"[^\"]*\"\"\"\\|'''[^']*'''\\|\"[^\"\\]*\\(\\\\.[^\"\\]*\\)*\"\\|'[^'\\]*\\(\\\\.[^'\\]*\\)*'\\)"
-       . font-lock-string-face)
-      ;; Numbers
-      ("\\<\\([0-9]+\\([.][0-9]*\\)?\\|[0-9]*[.][0-9]+\\)\\([eE][+-]?[0-9]+\\)?[jJ]?"
-       . font-lock-constant-face)
-      ;; Operators
-      ("\\([-+*/%&|^<>=!]=?\\|//\\|<<\\|>>\\|\\*\\*\\|->\\|=>\\)"
-       . font-lock-builtin-face)
+
+      ;; Class/Protocol/Extension definitions
+      ("\\<\\(?:class\\|protocol\\|extension\\)\\>[ \t]+\\([A-Z][a-zA-Z0-9_]*\\)"
+       (1 font-lock-type-face))
+
+      ;; Actor definitions
+      ("\\<actor\\>[ \t]+\\([A-Z][a-zA-Z0-9_]*\\)"
+       (1 font-lock-type-face))
+
+      ;; Generic type parameters
+      ("\\<[A-Z]\\d*\\>" . font-lock-type-face)
+
       ;; Comments
       ("#.*$" . font-lock-comment-face))))
 
-;; Create and set up syntax table
-(defvar acton-mode-syntax-table
-  (let ((table (make-syntax-table)))
-    ;; Comments
-    (modify-syntax-entry ?# "<" table)
-    (modify-syntax-entry ?\n ">" table)
-
-    ;; Strings
-    (modify-syntax-entry ?\" "\"" table)
-    (modify-syntax-entry ?' "\"" table)
-
-    ;; Pairs
-    (modify-syntax-entry ?\( "()" table)
-    (modify-syntax-entry ?\) ")(" table)
-    (modify-syntax-entry ?\[ "(]" table)
-    (modify-syntax-entry ?\] ")[" table)
-    (modify-syntax-entry ?\{ "(}" table)
-    (modify-syntax-entry ?\} "){" table)
-
-    ;; Operators
-    (modify-syntax-entry ?+ "." table)
-    (modify-syntax-entry ?- "." table)
-    (modify-syntax-entry ?* "." table)
-    (modify-syntax-entry ?/ "." table)
-    (modify-syntax-entry ?% "." table)
-    (modify-syntax-entry ?& "." table)
-    (modify-syntax-entry ?| "." table)
-    (modify-syntax-entry ?^ "." table)
-    (modify-syntax-entry ?! "." table)
-    (modify-syntax-entry ?< "." table)
-    (modify-syntax-entry ?> "." table)
-    (modify-syntax-entry ?= "." table)
-
-    ;; Symbol constituents
-    (modify-syntax-entry ?_ "_" table)
-    table))
-
-;;;###autoload
-(define-derived-mode acton-mode prog-mode "Acton"
-  "Major mode for editing Acton source code."
-  :syntax-table acton-mode-syntax-table
-
-  ;; Comment setup
-  (setq-local comment-start "#")
-  (setq-local comment-start-skip "#+\\s-*")
-
-  ;; Indentation setup
-  (setq-local indent-line-function 'acton-indent-line)
-  (setq-local tab-width 4)  ; Default to 4 spaces per indent level
-
-  ;; Font lock setup
-  (setq-local font-lock-defaults
-              '(acton-font-lock-keywords  ; keywords
-                nil                       ; keywords-only
-                nil                       ; case-fold
-                nil                       ; syntax-alist
-                nil)))                    ; syntax-begin
+;; Indentation settings
+(defcustom acton-indent-offset 4
+  "Number of spaces for each indentation step in `acton-mode'."
+  :type 'integer
+  :safe 'integerp
+  :group 'acton)
 
 ;; Create and set up syntax table
 (defvar acton-mode-syntax-table
@@ -169,6 +155,7 @@
     ;; Strings
     (modify-syntax-entry ?\" "\"" table)
     (modify-syntax-entry ?' "\"" table)
+    (modify-syntax-entry ?\\ "\\" table)
 
     ;; Pairs
     (modify-syntax-entry ?\( "()" table)
@@ -179,25 +166,12 @@
     (modify-syntax-entry ?\} "){" table)
 
     ;; Operators
-    (modify-syntax-entry ?+ "." table)
-    (modify-syntax-entry ?- "." table)
-    (modify-syntax-entry ?* "." table)
-    (modify-syntax-entry ?/ "." table)
-    (modify-syntax-entry ?% "." table)
-    (modify-syntax-entry ?& "." table)
-    (modify-syntax-entry ?| "." table)
-    (modify-syntax-entry ?^ "." table)
-    (modify-syntax-entry ?! "." table)
-    (modify-syntax-entry ?< "." table)
-    (modify-syntax-entry ?> "." table)
-    (modify-syntax-entry ?= "." table)
+    (dolist (char '(?+ ?- ?* ?/ ?% ?& ?| ?^ ?! ?< ?> ?= ?~))
+      (modify-syntax-entry char "." table))
 
     ;; Symbol constituents
     (modify-syntax-entry ?_ "_" table)
     table))
-
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.act\\'" . acton-mode))
 
 (defun acton-indent-line ()
   "Indent current line as Acton code."
@@ -215,23 +189,84 @@
   (save-excursion
     (beginning-of-line)
     (let ((syntax-bol (syntax-ppss)))
-      (if (bobp)  ; Beginning of buffer?
-          0
-        (let ((indent 0))
-          ;; Previous non-empty line indentation
+      (cond
+       ;; Inside a string
+       ((nth 3 syntax-bol)
+        (if (nth 8 syntax-bol)
+            (goto-char (nth 8 syntax-bol))
+          (current-indentation)))
+
+       ;; Inside a paren/bracket/brace
+       ((nth 1 syntax-bol)
+        (goto-char (nth 1 syntax-bol))
+        (+ (current-indentation)
+           (if (looking-at "[[({][ \t]*$")
+               acton-indent-offset
+             1)))
+
+       ;; Normal indentation
+       (t
+        (let ((indent 0)
+              (saw-colon nil))
+          ;; Find previous non-blank line
           (while (and (zerop indent) (not (bobp)))
             (forward-line -1)
-            (unless (looking-at "^[ \t]*$") ; Skip empty lines
-              (setq indent (current-indentation))))
+            (when (not (looking-at "^[ \t]*$"))
+              (setq indent (current-indentation))
+              ;; Check for colon at end of line
+              (when (looking-at ".*:[ \t]*$")
+                (setq saw-colon t))))
 
-          ;; Increase indent after lines ending with :
-          (save-excursion
-            (when (and (skip-chars-backward " \t\n") (not (bobp)))
-              (when (looking-back ":[ \t]*" (line-beginning-position))
-                (setq indent (+ indent tab-width)))))
+          ;; Adjust indentation based on context
+          (cond
+           ;; After colon, indent one level
+           (saw-colon
+            (+ indent acton-indent-offset))
+           ;; At top level
+           ((zerop indent)
+            0)
+           ;; Default: keep previous indentation
+           (t indent))))))))
 
-          ;; Return the indentation level
-          indent)))))
+;;;###autoload
+(define-derived-mode acton-mode prog-mode "Acton"
+  "Major mode for editing Acton source code."
+  :syntax-table acton-mode-syntax-table
+
+  ;; Comment setup
+  (setq-local comment-start "#")
+  (setq-local comment-start-skip "#+\\s-*")
+  (setq-local comment-column 40)
+  (setq-local comment-use-syntax t)
+
+  ;; Indentation
+  (setq-local indent-line-function 'acton-indent-line)
+  (setq-local tab-width acton-indent-offset)
+  (setq-local indent-tabs-mode nil)  ; Use spaces for indentation
+
+  ;; Font lock
+  (setq-local font-lock-defaults
+              '(acton-font-lock-keywords  ; keywords
+                nil                       ; keywords-only
+                nil                       ; case-fold
+                nil                       ; syntax-alist
+                beginning-of-defun))      ; syntax-begin
+
+  ;; Paragraph separation
+  (setq-local paragraph-start (concat "^[ \t]*$\\|" page-delimiter))
+  (setq-local paragraph-separate paragraph-start)
+  (setq-local paragraph-ignore-fill-prefix t)
+
+  ;; Add imenu support
+  (setq-local imenu-generic-expression
+              '(("Class" "^[ \t]*class[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
+                ("Actor" "^[ \t]*actor[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
+                ("Protocol" "^[ \t]*protocol[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
+                ("Extension" "^[ \t]*extension[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
+                ("Function" "^[ \t]*def[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1))))
+
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.act\\'" . acton-mode))
 
 (provide 'acton-mode)
 
