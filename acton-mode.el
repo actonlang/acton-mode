@@ -192,8 +192,8 @@
       (cond
        ;; Inside a string
        ((nth 3 syntax-bol)
-        (if (nth 8 syntax-bol)
-            (goto-char (nth 8 syntax-bol))
+        (save-excursion
+          (goto-char (nth 8 syntax-bol))  ; Go to start of string
           (current-indentation)))
 
        ;; Inside a paren/bracket/brace
