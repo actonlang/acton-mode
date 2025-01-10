@@ -67,14 +67,6 @@
 (defvar acton-builtin-functions
   '("isinstance"))
 
-(defvar acton-operators
-  '("+" "-" "*" "/" "//" "%" "@" "**"          ; arithmetic
-    "==" "!=" "<>" "<" ">" "<=" ">=" "is" "in" ; comparison
-    "and" "or" "not"                           ; logical
-    "&" "|" "^" "~" "<<" ">>"                  ; bitwise
-    "=" "+=" "-=" "*=" "/=" "//=" "%=" "@="    ; assignment
-    "&=" "|=" "^=" "<<=" ">>="))
-
 (defvar acton-decorators
   '("@property" "@staticmethod" "@static"))
 
@@ -121,6 +113,25 @@
        . font-lock-constant-face)
       ;; Numbers - decimal
       ("\\<[0-9]+\\>" . font-lock-constant-face)
+
+      ;; Operators
+      ;; Arithmetic operators
+      ("[-+*/%@]\\|//\\|\\*\\*" . font-lock-builtin-face)
+      ;; Bitwise operators
+      ("[&|^~]\\|<<\\|>>" . font-lock-builtin-face)
+      ;; Comparison operators
+      ("==\\|!=\\|<=\\|>=\\|<\\|>" . font-lock-builtin-face)
+      ;; Assignment operators
+      ("\\(?:[-+*/%&|^]\\|//\\|\\*\\*\\|<<\\|>>\\)=" . font-lock-builtin-face)
+      ;; Special operators
+      ("\\_<\\(?:is\\s-+not\\|not\\s-+in\\)\\_>" . font-lock-builtin-face)
+      ("\\(?:->\\|=>\\)" . font-lock-builtin-face)
+
+      ;; Type variables and annotations
+      ;; Generic type variables (T, T0, T1, etc.)
+      ("\\_<[A-Z]\\d*\\_>" . font-lock-type-face)
+      ;; Type annotations with optional whitespace
+      (":\\s-*\\([A-Z][a-zA-Z0-9_]*\\(?:\\[[^]]*\\]\\)?\\)" 1 font-lock-type-face)
 
       ;; Decorators
       (,(concat "^[ \t]*" decorator-re "[ \t]*\\(?:$\\|[^[:alnum:]_]\\)")
