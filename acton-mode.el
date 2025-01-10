@@ -100,8 +100,12 @@
        0 font-lock-string-face)
 
       ;; Regular strings with escapes
-      ("\\(\"[^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\"\\|'[^'\\]*\\(?:\\\\.[^'\\]*\\)*'\\)"
+      ("\\(?:\"[^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\"\\|'[^'\\]*\\(?:\\\\.[^'\\]*\\)*'\\)"
        0 font-lock-string-face)
+
+      ;; String escapes
+      ("\\\\[abfnrtv'\"\\\\]\\|\\\\[0-7]\\{1,3\\}\\|\\\\x[[:xdigit:]]\\{2\\}\\|\\\\u[[:xdigit:]]\\{4\\}\\|\\\\U[[:xdigit:]]\\{8\\}"
+       0 font-lock-escape-face t)
 
       ;; Numbers - hex
       ("\\<0x[0-9a-fA-F]+\\>" . font-lock-constant-face)
