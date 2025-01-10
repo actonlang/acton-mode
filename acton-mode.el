@@ -88,7 +88,7 @@
         (decorator-re (regexp-opt acton-decorators)))
     `(
       ;; Triple-quoted strings
-      ("\\(\"\"\"[^\"]*\"\"\"\\|'''[^']*'''\\)"
+      ("\\(?:\"\"\"[\\s\\S]*?\"\"\"\\|'''[\\s\\S]*?'''\\)"
        0 font-lock-string-face)
 
       ;; Regular strings with escapes
