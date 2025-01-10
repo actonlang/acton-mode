@@ -5,7 +5,7 @@
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.2.0
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
