@@ -1,11 +1,10 @@
-;;; acton-mode.el -*- lexical-binding: t; -*-
-;;; Major mode for editing Acton source code
+;;; acton-mode.el --- Major mode for editing Acton source code  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) Kristian Larsson <k@centor.se>
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.4.1
+;; Version: 0.4.2
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
