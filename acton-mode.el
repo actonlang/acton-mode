@@ -5,7 +5,7 @@
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.3.0
+;; Version: 0.4.0
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
@@ -235,18 +235,28 @@
        ;; Normal indentation
        (t
         (let ((indent 0)
-              (saw-colon nil))
+              (saw-colon nil)
+              (after-deindent nil))  ; Flag for any deindenting statement
           ;; Find previous non-blank line
-          (while (and (zerop indent) (not (bobp)))
+          (save-excursion
             (forward-line -1)
-            (when (not (looking-at "^[ \t]*$"))
+            (while (and (>= (point) (point-min))
+                       (looking-at "^[ \t]*$"))
+              (forward-line -1))
+            (unless (< (point) (point-min))
               (setq indent (current-indentation))
               ;; Check for colon at end of line
               (when (looking-at ".*:[ \t]*$")
-                (setq saw-colon t))))
+                (setq saw-colon t))
+              ;; Check for any statement that logically ends a block
+              (when (looking-at "^[ \t]*\\(return\\|pass\\|break\\|continue\\|raise\\)\\b")
+                (setq after-deindent t))))
 
           ;; Adjust indentation based on context
           (cond
+           ;; After a block-ending statement, de-indent one level
+           (after-deindent
+            (max 0 (- indent acton-indent-offset)))
            ;; After colon, indent one level
            (saw-colon
             (+ indent acton-indent-offset))
@@ -255,6 +265,48 @@
             0)
            ;; Default: keep previous indentation
            (t indent))))))))
+
+(defun acton-handle-colon ()
+  "Handle colon insertion for auto-indentation.
+De-indents else/elif/except/finally lines when colon is typed."
+  (let ((inhibit-message nil))  ; Make sure messages aren't suppressed
+    (when (eq (char-before) ?:)
+      (let (target-indent  ; Store target indent outside save-excursion
+            (max-iterations 1000)  ; Allow for larger files
+            (max-distance 50000))  ; ~1000 lines of 50 chars each
+        ;; First find the parent if/try
+        (save-excursion
+          (beginning-of-line)
+          (let* ((line (buffer-substring-no-properties
+                       (line-beginning-position)
+                       (line-end-position)))
+                 (current-indent (current-indentation))
+                 (starting-pos (point))
+                 (iteration-count 0))
+            (when (string-match "^[ \t]*\\(else\\|elif\\|except\\|finally\\):" line)
+              ;; Start checking from previous line
+              (forward-line -1)
+              (while (and (not target-indent)
+                         (>= (point) (point-min))  ; Don't go before buffer start
+                         (< (point) (point-max))   ; Don't go past buffer end
+                         (< iteration-count max-iterations)
+                         (< (abs (- (point) starting-pos)) max-distance))
+                (let ((this-indent (current-indentation)))
+                  ;; Look for matching or lesser indentation
+                  (when (and (<= this-indent current-indent)
+                           (looking-at "^[ \t]*\\(if\\|try\\)\\b"))
+                    (setq target-indent this-indent)))
+                (cl-incf iteration-count)
+                (forward-line -1))
+              (when (>= iteration-count max-iterations)))))
+
+        ;; Now apply the indentation in a separate save-excursion if needed
+        (when target-indent
+          (save-excursion
+            (beginning-of-line)
+            (let ((current-indent (current-indentation)))
+              (unless (= current-indent target-indent)
+                (indent-line-to target-indent)))))))))
 
 ;;;###autoload
 (define-derived-mode acton-mode prog-mode "Acton"
@@ -291,7 +343,9 @@
                 ("Actor" "^[ \t]*actor[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
                 ("Protocol" "^[ \t]*protocol[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
                 ("Extension" "^[ \t]*extension[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)
-                ("Function" "^[ \t]*def[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1))))
+                ("Function" "^[ \t]*def[ \t]+\\([A-Za-z_][A-Za-z0-9_]*\\)" 1)))
+
+  (add-hook 'post-self-insert-hook #'acton-handle-colon nil t))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.act\\'" . acton-mode))
