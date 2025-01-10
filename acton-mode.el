@@ -107,12 +107,17 @@
       ("\\\\[abfnrtv'\"\\\\]\\|\\\\[0-7]\\{1,3\\}\\|\\\\x[[:xdigit:]]\\{2\\}\\|\\\\u[[:xdigit:]]\\{4\\}\\|\\\\U[[:xdigit:]]\\{8\\}"
        0 font-lock-escape-face t)
 
+      ;; Numbers - complex
+      ("\\<\\(?:[0-9]+\\.[0-9]*\\|[0-9]*\\.[0-9]+\\)\\(?:[eE][+-]?[0-9]+\\)?[jJ]\\>"
+       . font-lock-constant-face)
+      ("\\<[0-9]+[jJ]\\>" . font-lock-constant-face)
+
       ;; Numbers - hex
       ("\\<0x[0-9a-fA-F]+\\>" . font-lock-constant-face)
       ;; Numbers - octal
       ("\\<0o[0-7]+\\>" . font-lock-constant-face)
       ;; Numbers - float
-      ("\\<\\(?:[0-9]+\\.[0-9]*\\|[0-9]*\\.[0-9]+\\)\\(?:[eE][+-]?[0-9]+\\)?j?\\>"
+      ("\\<\\(?:[0-9]+\\.[0-9]*\\|[0-9]*\\.[0-9]+\\)\\(?:[eE][+-]?[0-9]+\\)?\\>"
        . font-lock-constant-face)
       ;; Numbers - decimal
       ("\\<[0-9]+\\>" . font-lock-constant-face)
