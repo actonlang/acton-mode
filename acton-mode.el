@@ -123,7 +123,7 @@
       ("\\<[0-9]+\\>" . font-lock-constant-face)
 
       ;; Decorators
-      (,(concat "^[ \t]*" decorator-re "[ \t]*$")
+      (,(concat "^[ \t]*" decorator-re "[ \t]*\\(?:$\\|[^[:alnum:]_]\\)")
        . font-lock-preprocessor-face)
 
       ;; Keywords
