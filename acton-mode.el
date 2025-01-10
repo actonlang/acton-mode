@@ -5,7 +5,7 @@
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.4.0
+;; Version: 0.4.1
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
@@ -298,7 +298,8 @@ De-indents else/elif/except/finally lines when colon is typed."
                     (setq target-indent this-indent)))
                 (cl-incf iteration-count)
                 (forward-line -1))
-              (when (>= iteration-count max-iterations)))))
+              (when (>= iteration-count max-iterations)
+                (setq target-indent nil)))))  ; Explicitly set target-indent to nil
 
         ;; Now apply the indentation in a separate save-excursion if needed
         (when target-indent
