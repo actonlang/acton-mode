@@ -4,7 +4,7 @@
 ;; Author: Kristian Larsson
 ;; Keywords: languages programming
 ;; Homepage: https://github.com/actonlang/acton-mode
-;; Version: 0.4.2
+;; Version: 0.4.3
 ;; Package-Requires: ((emacs "25.1"))
 
 ;;; Commentary:
@@ -239,10 +239,10 @@
           ;; Find previous non-blank line
           (save-excursion
             (forward-line -1)
-            (while (and (>= (point) (point-min))
+            (while (and (not (bobp))
                        (looking-at "^[ \t]*$"))
               (forward-line -1))
-            (unless (< (point) (point-min))
+            (unless (bobp)
               (setq indent (current-indentation))
               ;; Check for colon at end of line
               (when (looking-at ".*:[ \t]*$")
@@ -286,8 +286,8 @@ De-indents else/elif/except/finally lines when colon is typed."
               ;; Start checking from previous line
               (forward-line -1)
               (while (and (not target-indent)
-                         (>= (point) (point-min))  ; Don't go before buffer start
-                         (< (point) (point-max))   ; Don't go past buffer end
+                         (not (bobp))  ; Don't go before buffer start
+                         (not (eobp))   ; Don't go past buffer end
                          (< iteration-count max-iterations)
                          (< (abs (- (point) starting-pos)) max-distance))
                 (let ((this-indent (current-indentation)))
@@ -320,7 +320,7 @@ De-indents else/elif/except/finally lines when colon is typed."
   (setq-local comment-use-syntax t)
 
   ;; Indentation
-  (setq-local indent-line-function 'acton-indent-line)
+  (setq-local indent-line-function #'acton-indent-line)
   (setq-local tab-width acton-indent-offset)
   (setq-local indent-tabs-mode nil)  ; Use spaces for indentation
 
